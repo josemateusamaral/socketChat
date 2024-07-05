@@ -4,13 +4,14 @@ from functools import partial
 import time
 import platform
 
-comando = ""
+clientes = 2
+
 if platform.system() == "Linux":
-    Thread(target=partial(os.system,'python3 EasyChat.py')).start()
+    for i in range(clientes): Thread(target=partial(os.system,'python3 Cliente.py')).start()
     time.sleep(1)
     Thread(target=partial(os.system,'python3 Servidor.py')).start()
 else: 
-    Thread(target=partial(os.system,'python EasyChat.py')).start()
+    for i in range(clientes): Thread(target=partial(os.system,'python Cliente.py')).start()
     time.sleep(1)
     Thread(target=partial(os.system,'python Servidor.py')).start()
 

@@ -1,8 +1,8 @@
 import socket
 import sys
 import json
-import time
-
+from functools import partial
+from threading import Thread
 
 class SERVER:
     def IniciarServidor(self):      
@@ -16,13 +16,18 @@ class SERVER:
                         dataRaw = conn.recv(2048)
                         data = repr(dataRaw)[2:-1]
                         if not dataRaw: break
-                        self.tratarRequest(data)
+                        Thread(target=partial(self.tratarRequest,data)).start()
                         
-    def enviarRequest(self,payload,host,porta):
-        payload = json.dumps(payload)
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((host,porta))
-            s.sendall(payload.encode('utf-8'))   
+    def enviarRequest(self,payload,host,porta,assync=False):
+
+        if not assync:
+            Thread(target=partial(self.enviarRequest,payload,host,porta,True)).start()
+        else:
+            payload = json.dumps(payload)
+            print("enviando request:",payload)
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect((host,porta))
+                s.sendall(payload.encode('utf-8'))   
 
     def tratarRequest(self,request):
         print("Request:",request)

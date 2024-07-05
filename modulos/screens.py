@@ -11,7 +11,7 @@ class SCREENS:
         px = int(self.window.winfo_screenwidth()/2 - tamanho / 2)
         py = int(self.window.winfo_screenheight()/2 - tamanho / 2)
         self.window.geometry('{}x{}+{}+{}'.format(tamanho,tamanho,px,py))
-        self.window.title('EASY CHAT - Mensagens')
+        self.window.title('Cliente - Mensagens')
         
     def zeroWindow(self):
         for i in self.window.winfo_children(): i.destroy()
@@ -25,6 +25,8 @@ class SCREENS:
         tk.Label(text='choose acount',master=self.window).pack(side='top')
         tk.Button(text='add acount',master=self.window,command=self.loginScreen).pack(side='top')
         for nickname in self.data: 
+            if nickname == self.nickName:
+                continue
             tk.Button(text=nickname,command=partial(self.enterAcount,nickname)).pack(expand=True)
 
     def loginScreen(self):
@@ -39,11 +41,13 @@ class SCREENS:
         self.lookingAtContact = 'none'
         self.screen = 'contacts'
         self.zeroWindow()
-        self.window.title('EASY CHAT - Mensagens')
+        self.window.title('Cliente - Mensagens')
         self.defaultWidgets()
         done = []
         tk.Button(text='NOVA MENSAGEM',command=partial(self.newMessageScreen),bg='yellow',fg='black').pack(pady=15)
-        for name in self.data[self.nickName]:
+        for name in self.data:
+            if name == self.nickName:
+                continue
             buttonText = name
             botao = tk.Button(text=buttonText,master=self.window,command=partial(self.messageScreen,name))
             botao.pack()
@@ -60,7 +64,22 @@ class SCREENS:
         frame = tk.Frame()
         frame.config(bg='white')
         tk.Button(text='<',command=self.contactsScreen,master=frame,bg='yellow',fg='black').pack(side='left')  
-        tk.Label(master=frame,text="Contatos do Servidor",bg='white',fg='black').pack(side='left',fill='x',expand=True)  
+        tk.Label(master=frame,text="Contatos do Servidor",bg='white',fg='black').pack(side='left',fill='x',expand=True)    
+        frame.pack(fill='x',pady=4)  
+
+        frame = tk.Frame()
+       
+        tk.Label(text='ip servidor: ',master=frame,bg='white',fg='black').pack(fill='x',side='left',expand=True)
+        self.ipServidor = tk.Entry(master=frame)
+        self.ipServidor.pack(fill='x',side='left',expand=True)
+        self.ipServidor.insert(0,'192.168.0.14:3002')
+        tk.Button(text='atualizar',command=self.atualizarServidor,master=frame,bg='blue',fg='white').pack(side='left')  
+
+        if self.visivel:
+            tk.Button(text='visivel',command=self.toogleVisibilidade,master=frame,fg='white',bg='green').pack(side='left')
+        else:
+            tk.Button(text='invisivel',command=self.toogleVisibilidade,master=frame,fg='white',bg='red').pack(side='left')
+
         frame.pack(fill='x',pady=4)  
 
         frame = tk.Frame(master=self.window)
@@ -76,7 +95,7 @@ class SCREENS:
         frame.config(bg='white')
         tk.Label(text='to: ',master=frame,bg='white',fg='black').pack(side='left')
         self.entradaHost = tk.Entry(master=frame)
-        self.entradaHost.insert(0,'192.168.0.11:3001')
+        self.entradaHost.insert(0,'192.168.0.14:3002')
         self.entradaHost.pack(side='left',fill='x')
         frame.pack(fill='x',pady=4)
 
@@ -88,7 +107,47 @@ class SCREENS:
         sendButton.pack(side='left')
         frame.pack(fill='x',side='bottom')
 
+        for contato in self.contatosServidor:
+            listbox.insert(tk.END,contato)
+
         listbox.yview_moveto(1.0)
+        listbox.bind('<ButtonRelease-1>', self.selecionarContato)
+
+    def selecionarContato(self,event):
+        print("selecionando contato")
+        widget = event.widget
+        # Obtém o índice do item clicado
+        index = widget.curselection()
+        if index:
+            # Obtém o valor do item clicado
+            value = widget.get(index[0])
+            
+            if value not in self.data and value != self.nickName:
+                host = self.contatosServidor[value]["host"]
+                porta = str(self.contatosServidor[value]["porta"])
+                contato = host + ":" + porta
+                self.data[value] = {'messages':[],'contact':contato}
+                self.messageScreen(value)
+
+
+    def toogleVisibilidade(self):
+        print("mudando visibilidade")
+        self.visivel = not self.visivel
+        
+        payload = {
+            "tipo":"mudarVisibilidade",
+            "usuario":self.nickName,
+            "host":self.HOST,
+            "porta":self.PORT,
+            "visivel":self.visivel
+        }
+
+        servidor = self.ipServidor.get().split(":")
+        host = servidor[0]
+        porta = int(servidor[1])
+        self.enviarRequest(payload,host,porta)
+
+        self.newMessageScreen()
 
     def messageScreen(self,name):
 
@@ -122,7 +181,7 @@ class SCREENS:
         sendButton.pack(side='left')
         frame.pack(fill='x',side='bottom')
         
-        for message in self.data[self.nickName][name]['messages']:
+        for message in self.data[name]['messages']:
             listbox.insert(tk.END,message)
 
         listbox.yview_moveto(1.0)
