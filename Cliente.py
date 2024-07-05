@@ -52,12 +52,8 @@ class APP(SERVER,SCREENS):
             contato = f'{payload["host"]}:{payload["porta"]}'
             if usuario in self.data and self.data[usuario]["messages"] != []:
                 if "$>>ADDUSUARIO<<$" not in mensagem:
-                    self.data[usuario]['messages'].append(f"{usuario}: {mensagem}")
+                    self.data[usuario]['messages'].append(f"{usuario}: {mensagem}")                     
             else:
-                if "$>>ADDUSUARIO<<$" in mensagem:
-                    self.data[usuario] = {'messages':[mensagem.replace("$>>ADDUSUARIO<<$","")],'contact':contato}
-                else:
-                    self.data[usuario] = {'messages':[f"{usuario}: {mensagem}"],'contact':contato}
                 
                 payloadAddUsuario = {
                     "tipo":"mensagem",
@@ -68,7 +64,16 @@ class APP(SERVER,SCREENS):
                 }
                 self.enviarRequest(payloadAddUsuario,host,porta)
 
-            self.messageScreen(usuario)
+                if "$>>ADDUSUARIO<<$" in mensagem:
+                    self.data[usuario] = {'messages':[mensagem.replace("$>>ADDUSUARIO<<$","")],'contact':contato}
+                    return self.messageScreen(usuario)
+                else:
+                    self.data[usuario] = {'messages':[f"{usuario}: {mensagem}"],'contact':contato}
+                    if self.screen == "contacts":
+                        self.contactsScreen()
+                    return
+
+            
 
         elif payload["tipo"] == "atualizacaoContatos":
             self.contatosServidor = payload["contatos"]      
