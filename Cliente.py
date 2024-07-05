@@ -2,9 +2,7 @@ import socket, os
 from threading import Thread
 from modulos.server import SERVER
 from modulos.screens import SCREENS
-from functools import partial
 import json
-import time
             
 class APP(SERVER,SCREENS):
     def __init__(self):
@@ -17,6 +15,7 @@ class APP(SERVER,SCREENS):
         self.objetos = []
         self.contatosServidor = {}
         self.contatoSelecionado = None
+        self.numeroIpServidor = '192.168.0.14:3002'
 
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8",80))
@@ -37,21 +36,14 @@ class APP(SERVER,SCREENS):
         if acount not in self.data: self.data[acount] = {}
         self.enterAcount(acount=entry.get())
 
-        #adicionar conta ao servidor
-        return
-
     def enterAcount(self,acount):
         self.nickName = acount
         self.contactsScreen()
 
     def tratarRequest(self,request):
 
-        print("request:",request)
-
         payload = json.loads(request)
-        print(f'tratando request: {payload}')
 
-        #foi recebida uma mensagem
         if payload["tipo"] == "mensagem":
             usuario = payload["usuario"]
             mensagem = payload["mensagem"]
@@ -59,10 +51,11 @@ class APP(SERVER,SCREENS):
             porta = payload["porta"]
             contato = f'{payload["host"]}:{payload["porta"]}'
             if usuario in self.data and self.data[usuario]["messages"] != []:
-                self.data[usuario]['messages'].append(f"{usuario}: {mensagem}")
+                if "$>>ADDUSUARIO<<$" not in mensagem:
+                    self.data[usuario]['messages'].append(f"{usuario}: {mensagem}")
             else:
-                if mensagem[:11] == "addUsuario:":
-                    self.data[usuario] = {'messages':[mensagem[11:]],'contact':contato}
+                if "$>>ADDUSUARIO<<$" in mensagem:
+                    self.data[usuario] = {'messages':[mensagem.replace("$>>ADDUSUARIO<<$","")],'contact':contato}
                 else:
                     self.data[usuario] = {'messages':[f"{usuario}: {mensagem}"],'contact':contato}
                 
@@ -71,7 +64,7 @@ class APP(SERVER,SCREENS):
                     "usuario":self.nickName,
                     "host":self.HOST,
                     "porta":self.PORT,
-                    "mensagem":f"addUsuario:{mensagem}"
+                    "mensagem":f"$>>ADDUSUARIO<<${mensagem}"
                 }
                 self.enviarRequest(payloadAddUsuario,host,porta)
 
@@ -93,7 +86,6 @@ class APP(SERVER,SCREENS):
         else: 
             HOST = self.data[name]['contact'].split(':')
 
-        #enviar mensagem
         mensagem = self.NovaMensagem.get()
         payload = {
             "tipo":"mensagem",
@@ -111,8 +103,8 @@ class APP(SERVER,SCREENS):
             return self.messageScreen(name)      
 
     def atualizarServidor(self):
-        print("atualizando servidor")
-        servidor = self.ipServidor.get().split(":")
+        self.numeroIpServidor = self.ipServidor.get()
+        servidor = self.numeroIpServidor.split(":")
         host = servidor[0]
         porta = int(servidor[1])
 

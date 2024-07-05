@@ -4,7 +4,6 @@ from modulos.server import SERVER
 from modulos.screens import SCREENS
 import tkinter as tk
 import json
-from functools import partial
             
 class APP(SERVER,SCREENS):
     def __init__(self):
@@ -34,7 +33,7 @@ class APP(SERVER,SCREENS):
         bannerText = f'Servidor rodando em {self.HOST}:{self.PORT}'
         frame = tk.Frame()
         frame.config(bg='white')
-        tk.Button(text='Desligar',command=self.contactsScreen,master=frame,bg='red',fg='white').pack(side='left')  
+        tk.Button(text='Desligar',command=self.fecharServidor,master=frame,bg='red',fg='white').pack(side='left')  
         tk.Label(master=frame,text=bannerText,bg='white',fg='black').pack(side='left',fill='x',expand=True)  
         self.window.title('Servidor de contatos')
         frame.pack(fill='x',pady=4)  
@@ -91,7 +90,6 @@ class APP(SERVER,SCREENS):
             self.enviarRequest(payloadAtualizaacao,host,porta)
 
         elif payload["tipo"] == "mudarVisibilidade":
-            print("alterando a visibilidade do usuario:",usuario)
             if not visivel and usuario in self.contatos:
                 del self.contatos[usuario]
             payloadAtualizaacao = {

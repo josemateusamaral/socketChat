@@ -8,10 +8,10 @@ clientes = 2
 
 if platform.system() == "Linux":
     for i in range(clientes): Thread(target=partial(os.system,'python3 Cliente.py')).start()
-    time.sleep(1)
+    time.sleep(2)
     Thread(target=partial(os.system,'python3 Servidor.py')).start()
 else: 
     for i in range(clientes): Thread(target=partial(os.system,'python Cliente.py')).start()
-    time.sleep(1)
+    time.sleep(2)
     Thread(target=partial(os.system,'python Servidor.py')).start()
 

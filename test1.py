@@ -12,4 +12,4 @@ else:
 clientes = 2
 for i in range(clientes):
     Thread(target=partial(os.system,comando)).start()
-    time.sleep(1)
+    time.sleep(2)

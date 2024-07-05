@@ -24,17 +24,18 @@ class SERVER:
             Thread(target=partial(self.enviarRequest,payload,host,porta,True)).start()
         else:
             payload = json.dumps(payload)
-            print("enviando request:",payload)
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.connect((host,porta))
                 s.sendall(payload.encode('utf-8'))   
 
     def tratarRequest(self,request):
-        print("Request:",request)
+        pass
 
     def fecharServidor(self):
         self.running = False
-        self.window.destroy()
+        try:
+            self.window.destroy()
+        except: pass
         sys.exit()
 
     def portaEstaLivre(self,host,port):
